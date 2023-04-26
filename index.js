@@ -7,6 +7,7 @@ const app = express();
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const port = process.env.PORT || 4500;
 
 // Setup of cors
 app.use(cors());
@@ -54,8 +55,8 @@ io.on('connection', (socket) => {
 });
 
 // Start the server
-server.listen(4500, () => {
-    console.log('listening on *:4500');
+server.listen(port, () => {
+    console.log(`listening on ${port}`);
 });
 
 // Extra code for admin ui
