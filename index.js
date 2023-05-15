@@ -16,10 +16,8 @@ const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
         origin: '*',
-        methods: ["GET", "POST"],
-        transports: ["websocket", "polling"]
-    },
-    allowEIO3: true,
+        methods: ["GET", "POST"]
+    }
 });
 
 // When a user connects, handle all further events
