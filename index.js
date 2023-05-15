@@ -1,6 +1,3 @@
-// Allows use of admin ui on: https://admin.socket.io
-const { instrument } = require('@socket.io/admin-ui');
-
 // Setup of all requirements
 const express = require('express');
 const app = express();
@@ -13,7 +10,7 @@ const port = process.env.PORT;
 app.use(cors());
 
 // Create the server
-const server = http.createServer(app);
+const server = require('http').createServer(express);
 
 // Configure socket.io
 const io = new Server(server, {
@@ -58,6 +55,3 @@ io.on('connection', (socket) => {
 server.listen(port, () => {
     console.log(`listening on ${port}`);
 });
-
-// Extra code for admin ui
-instrument(io, { auth: false });
