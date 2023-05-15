@@ -10,15 +10,12 @@ const port = process.env.PORT;
 app.use(cors());
 
 // Create the server
-const server = http.createServer(app);
+const server = require('http').createServer(express);
 
 // Configure socket.io
-const io = new Server(server, {
-    cors: {
-        origin: '*',
-        methods: ["GET", "POST"]
-    }
-});
+const io = require("socket.io")(server, {
+    origins: ["*"]
+  });
 
 // When a user connects, handle all further events
 io.on('connection', (socket) => {
