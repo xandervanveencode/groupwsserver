@@ -10,7 +10,7 @@ const port = process.env.PORT;
 app.use(cors());
 
 // Create the server
-const server = require('http').createServer(express);
+const server = http.createServer(app);
 
 // Configure socket.io
 const io = new Server(server, {
