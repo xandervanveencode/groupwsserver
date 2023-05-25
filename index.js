@@ -5,7 +5,7 @@ const app = express();
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const port = 80;
+const port = process.env.PORT;
 
 // Setup of database connection
 const db = mysql.createConnection({
