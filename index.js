@@ -22,8 +22,6 @@ db.connect((err) => {
     throw err;
   }
   console.log('Connected to database');
-}).catch((err) => {
-  console.error('Error connecting to database:', err);
 });
 
 // Setup of cors
