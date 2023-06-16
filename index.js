@@ -5,7 +5,7 @@ const app = express();
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const port = process.env.PORT;
+const port = process.env.PORT || 3000;
 const employeeToken = "EpXZ3Z";
 
 // Setup of database connection
@@ -55,22 +55,19 @@ io.on('connection', (socket) => {
     FROM users
     WHERE users.username = '${user.username}' AND users.password = '${user.password}'
     `, (err, result) => {
-
-      try
-      { 
-        if(result.length == 0){
+      try { 
+        if (result.length == 0) {
           // If there was no user found, return 0
-          cb('0')
-        }
-        else{
+          cb('0');
+        } else {
           // If there was a user found, return the user
-          console.log(result)
-          cb(result[0])
+          console.log(result);
+          cb(result[0]);
         }
-      }
-      catch{
+      } catch (err) {
+        console.log(err);
         // If there was an error, return 0
-        cb('0')
+        cb('0');
       }
     });
   });
@@ -88,7 +85,8 @@ io.on('connection', (socket) => {
           console.log(result);
           cb('1');
         }
-      } catch {
+      } catch (err) {
+        console.log(err);
         // If there was an error, return 0
         cb('0');
       }
@@ -97,25 +95,23 @@ io.on('connection', (socket) => {
 
   // Updating the update of alert played
   socket.on("update_log", async (data, cb) => {
-    try{
+    try {
       updateLog(data.alertID, data.played);
-      cb(`1`)
-    }
-    catch(err) {
+      cb(`1`);
+    } catch (err) {
       console.log(err);
-      cb(`0`)
+      cb(`0`);
     }
   });
 
   // Update the alert played (Arduino)
   socket.on("update_log_arduino", async (data) => {
     console.log(`Arduino with ID: ${socket.id} requests to update alert with ID: ${data.alertID}`);
-    try{
+    try {
       updateLog(data.alertID, 1);
       // Emit success to the arduino
       socket.emit("update_log_success", {success: 1});
-    }
-    catch(err) {
+    } catch (err) {
       console.log(err);
       // Emit error to the arduino
       socket.emit("update_log_success", {success: 0});
@@ -141,20 +137,17 @@ io.on('connection', (socket) => {
 
   // Adding user to a room
   socket.on("join_room_employee", async (data, cb) => {
-    try{
+    try {
       socket.join(employeeToken);
       console.log(`Employee with ID: ${socket.id} joined room: ${employeeToken}`);
-
       // 1 == success
       cb(`1`);
-    } 
-    catch(err) {
+    } catch (err) {
+      console.log(err);
       // 0 == error
       cb(`0`);
-
     } 
   });
-
 
   // Adding user to a room
   socket.on("join_room", async (data, cb) => {
@@ -165,8 +158,7 @@ io.on('connection', (socket) => {
       console.log(`User with ID: ${socket.id} joined room: ${data.sharetoken}`);
       // 1 == success
       cb(`1`);
-    }
-    else {
+    } else {
       console.log(`User with ID: ${socket.id} tried to join room: ${data.sharetoken}`);
       // 0 == error
       cb(`0`);
@@ -183,8 +175,7 @@ io.on('connection', (socket) => {
       // 1 == success
       // Emit success to the arduino
       socket.emit("join_room_success", {success: 1});
-    }
-    else {
+    } else {
       console.log(`Arduino with ID: ${socket.id} tried to join room: ${data.sharetoken}`);
       // 0 == error
       // Emit error to the arduino
@@ -192,27 +183,24 @@ io.on('connection', (socket) => {
     }
   });
   
-    //Get the most recent alert for a lamp
-    socket.on("get_recent_alert_for_lamp", (data, cb) =>{
-      // Get lamp by ID from database
-      db.query(`SELECT MAX(date) AS most_recent_date
-      FROM history
-      WHERE lamp_id = ${data.id} AND played = 1`, (err, result) => {
-        try
-        { 
-          console.log(result);
-          if (result.length == 0) {
-            cb(`0`);
-          }
-          cb(result[0]);
-        }
-        catch {
-          // If there was an error, return 0
+  //Get the most recent alert for a lamp
+  socket.on("get_recent_alert_for_lamp", (data, cb) =>{
+    // Get lamp by ID from database
+    db.query(`SELECT MAX(date) AS most_recent_date
+    FROM history
+    WHERE lamp_id = ${data.id} AND played = 1`, (err, result) => {
+      try {
+        if (result.length == 0) {
           cb(`0`);
         }
-      });
+        cb(result[0]);
+      } catch (err) {
+        console.log(err);
+        // If there was an error, return 0
+        cb(`0`);
+      }
     });
-  
+  });
 
   // Get lamp and patient by id
   socket.on("get_lamp", (data, cb) =>{
@@ -222,15 +210,14 @@ io.on('connection', (socket) => {
       INNER JOIN users 
       ON lamp.patient_id = users.id
       WHERE lamp.id = ${data.id}`, (err, result) => {
-      try
-      { 
+      try { 
         console.log(result);
         if (result.length == 0) {
           cb(`0`);
         }
         cb(result[0]);
-      }
-      catch {
+      } catch (err) {
+        console.log(err);
         // If there was an error, return 0
         cb(`0`);
       }
@@ -255,17 +242,17 @@ io.on('connection', (socket) => {
       ) h ON l.id = h.lamp_id
       ORDER BY h.date ASC;
 `, (err, result) => {
-      try
-      { 
+      try { 
         console.log(result)
           cb(result)
-      }
-      catch{
+      } catch (err) {
+        console.log(err);
         // If there was an error, return 0
         cb('0')
       }
     });
   });
+
   // Get sharetoken by user id
   socket.on("get_sharetoken_by_user_id", (data, cb) =>{
     // Get sharetoken by user id from database
@@ -274,15 +261,14 @@ io.on('connection', (socket) => {
       INNER JOIN lamp
       ON users.id = lamp.patient_id
       WHERE users.id = ${data.id}`, (err, result) => {
-      try
-      { 
+      try { 
         console.log(result);
         if (result.length == 0) {
           cb(`0`);
         }
         cb(result[0]["sharetoken"]);
-      }
-      catch {
+      } catch (err) {
+        console.log(err);
         // If there was an error, return 0
         cb(`0`);
       }
@@ -298,14 +284,13 @@ io.on('connection', (socket) => {
       INNER JOIN history
       ON lamp.id = history.lamp_id
       WHERE users.id = ${data.id}`, (err, result) => {
-      try
-      {
+      try {
         if (result.length == 0) {
           cb(`0`);
         }
         cb(result);
-      }
-      catch {
+      } catch (err) {
+        console.log(err);
         // If there was an error, return 0
         cb(`0`);
       }
@@ -316,12 +301,11 @@ io.on('connection', (socket) => {
   socket.on("get_lamps", (cb) =>{
     // get lamps from database
     db.query(`SELECT * FROM lamp`, (err, result) => {
-      try
-      { 
+      try { 
         console.log(result);
         cb(result);
-      }
-      catch{
+      } catch (err) {
+        console.log(err);
         // If there was an error, return 0
         cb('0');
       }
@@ -335,8 +319,8 @@ io.on('connection', (socket) => {
       try {
         // If there was no error, return 1
         cb(`1`);
-      }
-      catch {
+      } catch (err) {
+        console.log(err);
         // If there was an error, return 0
         cb(`0`);
       }
@@ -353,8 +337,8 @@ io.on('connection', (socket) => {
       try { 
         // If there was no error, do nothing yet
         // The last query will handle the callback
-      }
-      catch {
+      } catch (err) {
+        console.log(err);
         // If there was an error, return 0
         cb(`0`);
       }
@@ -367,8 +351,8 @@ io.on('connection', (socket) => {
       try { 
         // If there was no error, do nothing yet
         // The last query will handle the callback
-      }
-      catch {
+      } catch (err) {
+        console.log(err);
         // If there was an error, return 0
         cb(`0`);
       }
@@ -378,8 +362,8 @@ io.on('connection', (socket) => {
       try { 
         // If there was no error, return 1
         cb(`1`);
-      }
-      catch {
+      } catch (err) {
+        console.log(err);
         // If there was an error, return 0
         cb(`0`);
       }
@@ -395,8 +379,7 @@ io.on('connection', (socket) => {
     if (exists != false) {
       // 1 == lamp exists
       cb(`1`);
-    }
-    else {
+    } else {
       // 0 == lamp does not exist
       cb(`0`);
     }
@@ -404,7 +387,6 @@ io.on('connection', (socket) => {
 
   // Sending alert to lamp
   socket.on("send_alert", async (data, cb) => {
-    console.log(data, cb)
     // Check if color was sent otherwise set to default
     if (data.color == undefined || data.color == '') {
       console.log(`No color was sent, setting to default (9)`);
@@ -499,12 +481,10 @@ async function getUserID(username) {
     db.query(sql, (err, result) => {
       if (err) {
         reject(err);
-      }
-      else{
+      } else {
         if (result.length == 0) {
           resolve(false);
-        }
-        else {
+        } else {
           resolve(result[0].id);
         }
       }
@@ -519,8 +499,7 @@ async function getLampToken(lampID) {
     db.query(sql, (err, result) => {
       if (err) {
         reject(err);
-      }
-      else{
+      } else {
         resolve(result[0].sharetoken);
       }
     });
@@ -537,7 +516,6 @@ async function updateLog(alertID, played) {
   });
 }
 
-
 // Get the id of the lamp with the given token
 async function getLampID(sharetoken) {
   let sql = "SELECT `id` FROM `lamp` WHERE lamp.sharetoken = '" + sharetoken + "' COLLATE utf8_bin";
@@ -549,8 +527,7 @@ async function getLampID(sharetoken) {
       // If the result is not empty, send back the id of the lamp
       if (result.length > 0) {
         resolve(result[0].id);
-      }
-      else {
+      } else {
         resolve(false);
       }
     });
@@ -568,8 +545,7 @@ async function getColorRGBFromID(colorID) {
       // If the result is not empty, send back the id of the lamp
       if (result.length > 0) {
         resolve([result[0].r, result[0].g, result[0].b]);
-      }
-      else {
+      } else {
         resolve(false);
       }
     });
@@ -597,8 +573,7 @@ async function saveAlert(lampID, colorID, message) {
       // If the result is not empty, send back the id of the alert
       if (result.length > 0) {
         resolve(result[0].id);
-      }
-      else {
+      } else {
         resolve(false);
       }
     });
