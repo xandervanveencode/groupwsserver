@@ -183,12 +183,12 @@ io.on('connection', (socket) => {
     }
   });
   
-  //Get the most recent alert for a lamp
+  // Get the most recent alert for a lamp
   socket.on("get_recent_alert_for_lamp", (data, cb) =>{
     // Get lamp by ID from database
     db.query(`SELECT MAX(date) AS most_recent_date
     FROM history
-    WHERE lamp_id = ${data.id} AND played = 1`, (err, result) => {
+    WHERE lamp_id = ${data.id}`, (err, result) => {
       try {
         if (result.length == 0) {
           cb(`0`);
@@ -228,19 +228,17 @@ io.on('connection', (socket) => {
   socket.on("get_lamps_dashboard", (cb) =>{
     // get lamps from database
     db.query(`SELECT l.id AS lamp_id, h.id AS history_id, h.date, l.sharetoken
-      FROM lamp l
-      LEFT JOIN (
-          SELECT h.lamp_id, h.id, h.date
-          FROM history h
-          INNER JOIN (
-              SELECT lamp_id, MAX(date) AS max_date
-              FROM history
-              WHERE played = 1
-              GROUP BY lamp_id
-          ) sub ON h.lamp_id = sub.lamp_id AND h.date = sub.max_date
-          WHERE h.played = 1
-      ) h ON l.id = h.lamp_id
-      ORDER BY h.date ASC;
+    FROM lamp l
+    LEFT JOIN (
+        SELECT h.lamp_id, h.id, h.date
+        FROM history h
+        INNER JOIN (
+            SELECT lamp_id, MAX(date) AS max_date
+            FROM history
+            GROUP BY lamp_id
+        ) sub ON h.lamp_id = sub.lamp_id AND h.date = sub.max_date
+    ) h ON l.id = h.lamp_id
+    ORDER BY h.date ASC;
 `, (err, result) => {
       try { 
         console.log(result)
