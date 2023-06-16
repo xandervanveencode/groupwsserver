@@ -9,20 +9,12 @@ const port = process.env.PORT || 3000;
 const employeeToken = "EpXZ3Z";
 
 // Setup of database connection
-const db = mysql.createConnection({
+const db_config = {
   host      : 'xandervanveen.nl',
   user      : 'u72001p68553_thinkofu',
   password  : 'wuAYTLujYDq5v7KsTgLn',
   database  : 'u72001p68553_thinkofu'
-});
-
-// Connect to the database
-db.connect((err) => {
-  if (err) {
-    throw err;
-  }
-  console.log('Connected to database');
-});
+};
 
 // Setup of cors
 app.use(cors());
@@ -50,8 +42,10 @@ io.on('connection', (socket) => {
   
   // attempt to login
   socket.on("login", (user, cb) =>{
+    let connection = mysql.createConnection(db_config);
+    connection.connect();
     // Check if the user exists in the database
-    db.query(`SELECT users.id, users.username, users.role_id
+    connection.query(`SELECT users.id, users.username, users.role_id
     FROM users
     WHERE users.username = '${user.username}' AND users.password = '${user.password}'
     `, (err, result) => {
@@ -61,7 +55,6 @@ io.on('connection', (socket) => {
           cb('0');
         } else {
           // If there was a user found, return the user
-          console.log(result);
           cb(result[0]);
         }
       } catch (err) {
@@ -70,12 +63,15 @@ io.on('connection', (socket) => {
         cb('0');
       }
     });
+    connection.end();
   });
 
   // Check if user with username exists
   socket.on("check_username", (data, cb) =>{
+    let connection = mysql.createConnection(db_config);
+    connection.connect();
     // Check if the user exists in the database
-    db.query(`SELECT users.id FROM users WHERE users.username = '${data.username}'`, (err, result) => {
+    connection.query(`SELECT users.id FROM users WHERE users.username = '${data.username}'`, (err, result) => {
       try {
         if (result.length == 0) {
           // If there was no user found, return 0
@@ -91,6 +87,7 @@ io.on('connection', (socket) => {
         cb('0');
       }
     });
+    connection.end();
   });
 
   // Updating the update of alert played
@@ -185,8 +182,10 @@ io.on('connection', (socket) => {
   
   // Get the most recent alert for a lamp
   socket.on("get_recent_alert_for_lamp", (data, cb) =>{
+    let connection = mysql.createConnection(db_config);
+    connection.connect();
     // Get lamp by ID from database
-    db.query(`SELECT MAX(date) AS most_recent_date
+    connection.query(`SELECT MAX(date) AS most_recent_date
     FROM history
     WHERE lamp_id = ${data.id}`, (err, result) => {
       try {
@@ -200,12 +199,15 @@ io.on('connection', (socket) => {
         cb(`0`);
       }
     });
+    connection.end();
   });
 
   // Get lamp and patient by id
   socket.on("get_lamp", (data, cb) =>{
+    let connection = mysql.createConnection(db_config);
+    connection.connect();
     // Get lamp by ID from database
-    db.query(`SELECT lamp.id AS lamp_id, lamp.name, lamp.sharetoken, users.id AS patient_id, users.username, users.password
+    connection.query(`SELECT lamp.id AS lamp_id, lamp.name, lamp.sharetoken, users.id AS patient_id, users.username, users.password
       FROM lamp
       INNER JOIN users 
       ON lamp.patient_id = users.id
@@ -222,12 +224,15 @@ io.on('connection', (socket) => {
         cb(`0`);
       }
     });
+    connection.end();
   });
 
   // get all lamps from database (dashboard)
   socket.on("get_lamps_dashboard", (cb) =>{
+    let connection = mysql.createConnection(db_config);
+    connection.connect();
     // get lamps from database
-    db.query(`SELECT l.id AS lamp_id, h.id AS history_id, h.date, l.sharetoken
+    connection.query(`SELECT l.id AS lamp_id, h.id AS history_id, h.date, l.sharetoken
     FROM lamp l
     LEFT JOIN (
         SELECT h.lamp_id, h.id, h.date
@@ -249,12 +254,15 @@ io.on('connection', (socket) => {
         cb('0')
       }
     });
+    connection.end();
   });
 
   // Get sharetoken by user id
   socket.on("get_sharetoken_by_user_id", (data, cb) =>{
+    let connection = mysql.createConnection(db_config);
+    connection.connect();
     // Get sharetoken by user id from database
-    db.query(`SELECT lamp.sharetoken
+    connection.query(`SELECT lamp.sharetoken
       FROM users
       INNER JOIN lamp
       ON users.id = lamp.patient_id
@@ -271,11 +279,14 @@ io.on('connection', (socket) => {
         cb(`0`);
       }
     });
+    connection.end();
   });
 
   // Get all history data from lamp connected by user id
   socket.on("get_all_history_by_user_id", (data, cb) =>{
-    db.query(`SELECT history.color_id, history.message, history.date
+    let connection = mysql.createConnection(db_config);
+    connection.connect();
+    connection.query(`SELECT history.color_id, history.message, history.date
       FROM users
       INNER JOIN lamp
       ON users.id = lamp.patient_id
@@ -293,12 +304,15 @@ io.on('connection', (socket) => {
         cb(`0`);
       }
     });
+    connection.end();
   });
 
   // Get all lamps
   socket.on("get_lamps", (cb) =>{
+    let connection = mysql.createConnection(db_config);
+    connection.connect();
     // get lamps from database
-    db.query(`SELECT * FROM lamp`, (err, result) => {
+    connection.query(`SELECT * FROM lamp`, (err, result) => {
       try { 
         console.log(result);
         cb(result);
@@ -308,12 +322,15 @@ io.on('connection', (socket) => {
         cb('0');
       }
     });
+    connection.end();
   });
 
   // Edit lamp name
   socket.on("edit_lamp_name", (data, cb) =>{
+    let connection = mysql.createConnection(db_config);
+    connection.connect();
     // Update lamp name in database
-    db.query(`UPDATE lamp SET name = '${data.name}' WHERE id = ${data.id}`, (err, result) => {
+    connection.query(`UPDATE lamp SET name = '${data.name}' WHERE id = ${data.id}`, (err, result) => {
       try {
         // If there was no error, return 1
         cb(`1`);
@@ -323,6 +340,7 @@ io.on('connection', (socket) => {
         cb(`0`);
       }
     });
+    connection.end();
   });
 
   // Reset lamp
@@ -331,7 +349,9 @@ io.on('connection', (socket) => {
     let sharetoken = await generateToken();
     // Also update the name of the lamp to be the same as the token (default)
     // Update token in database
-    db.query(`UPDATE lamp SET sharetoken = '${sharetoken}', name = '${sharetoken}' WHERE id = ${data.id}`, (err, result) => {
+    let connection = mysql.createConnection(db_config);
+    connection.connect();
+    connection.query(`UPDATE lamp SET sharetoken = '${sharetoken}', name = '${sharetoken}' WHERE id = ${data.id}`, (err, result) => {
       try { 
         // If there was no error, do nothing yet
         // The last query will handle the callback
@@ -341,11 +361,14 @@ io.on('connection', (socket) => {
         cb(`0`);
       }
     });
+    connection.end();
     // Generate new login information for patient connected to lamp
     let username = await generateUsername();
     let password = await generatePassword();
     // Update login information in database
-    db.query(`UPDATE users SET username = '${username}', password = '${password}' WHERE id = ${data.patient_id}`, (err, result) => {
+    connection = mysql.createConnection(db_config);
+    connection.connect();
+    connection.query(`UPDATE users SET username = '${username}', password = '${password}' WHERE id = ${data.patient_id}`, (err, result) => {
       try { 
         // If there was no error, do nothing yet
         // The last query will handle the callback
@@ -355,8 +378,11 @@ io.on('connection', (socket) => {
         cb(`0`);
       }
     });
+    connection.end();
     // Remove all history related to the lamp
-    db.query(`DELETE FROM history WHERE lamp_id = ${data.id}`, (err, result) => {
+    connection = mysql.createConnection(db_config);
+    connection.connect();
+    connection.query(`DELETE FROM history WHERE lamp_id = ${data.id}`, (err, result) => {
       try { 
         // If there was no error, return 1
         cb(`1`);
@@ -366,6 +392,7 @@ io.on('connection', (socket) => {
         cb(`0`);
       }
     });
+    connection.end();
   });
 
 
@@ -473,13 +500,16 @@ async function generateRandomString(length) {
 
 // Get userID by username
 async function getUserID(username) {
+  let connection = mysql.createConnection(db_config);
+  connection.connect();
   let sql = "SELECT `id` FROM `users` WHERE users.username = '" + username + "'";
   console.log(sql);
   return new Promise((resolve, reject) => {
-    db.query(sql, (err, result) => {
+    connection.query(sql, (err, result) => {
       if (err) {
         reject(err);
       } else {
+        connection.end();
         if (result.length == 0) {
           resolve(false);
         } else {
@@ -492,9 +522,12 @@ async function getUserID(username) {
 
 // Get token for lamp room
 async function getLampToken(lampID) {
+  let connection = mysql.createConnection(db_config);
+  connection.connect();
   let sql = "SELECT `sharetoken` FROM `lamp` WHERE lamp.id = '" + lampID + "'";
   return new Promise((resolve, reject) => {
-    db.query(sql, (err, result) => {
+    connection.query(sql, (err, result) => {
+      connection.end();
       if (err) {
         reject(err);
       } else {
@@ -506,19 +539,25 @@ async function getLampToken(lampID) {
 
 // Update the alert that it's been shown
 async function updateLog(alertID, played) {
+  let connection = mysql.createConnection(db_config);
+  connection.connect();
   let sql = "UPDATE `history` SET `played` = '" + played + "' WHERE history.id = '" + alertID + "'";
   console.log(sql);
   return new Promise((resolve, reject) => {
-    db.query(sql, (err, result) => {
+    connection.query(sql, (err, result) => {
+      connection.end();
     });
   });
 }
 
 // Get the id of the lamp with the given token
 async function getLampID(sharetoken) {
+  let connection = mysql.createConnection(db_config);
+  connection.connect();
   let sql = "SELECT `id` FROM `lamp` WHERE lamp.sharetoken = '" + sharetoken + "' COLLATE utf8_bin";
   return new Promise((resolve, reject) => {
-    db.query(sql, (err, result) => {
+    connection.query(sql, (err, result) => {
+      connection.end();
       if (err) {
         reject(err);
       }
@@ -534,9 +573,12 @@ async function getLampID(sharetoken) {
 
 // Get the id of the lamp with the given token
 async function getColorRGBFromID(colorID) {
+  let connection = mysql.createConnection(db_config);
+  connection.connect();
   let sql = "SELECT `r`, `g`, `b` FROM `color` WHERE color.id = " + colorID + ";";
   return new Promise((resolve, reject) => {
-    db.query(sql, (err, result) => {
+    connection.query(sql, (err, result) => {
+      connection.end();
       if (err) {
         reject(err);
       }
@@ -552,19 +594,24 @@ async function getColorRGBFromID(colorID) {
 
 // Save alert to database
 async function saveAlert(lampID, colorID, message) {
+  let connection = mysql.createConnection(db_config);
+  connection.connect();
   let sql = "INSERT INTO `history` (`lamp_id`, `color_id`, `message`, `played`) VALUES (" + lampID + ", " + colorID + ", '" + message + "', false);";
   return new Promise((resolve, reject) => {
-    db.query(sql, (err, result) => {
+    connection.query(sql, (err, result) => {
       if (err) {
+        connection.end();
         reject(err);
       }
       // If no row has been created, send back false
       if (result.affectedRows == 0) {
+        connection.end();
         resolve(false);
       }
     });
     // Get the id of the alert that was just created
-    db.query("SELECT LAST_INSERT_ID() as `id`;", (err, result) => {
+    connection.query("SELECT LAST_INSERT_ID() as `id`;", (err, result) => {
+      connection.end();
       if (err) {
         reject(err);
       }
